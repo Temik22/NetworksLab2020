@@ -89,6 +89,9 @@ class RRQ:
 			+ int_to_n_bytes(0, 1)
 			)
 
+	def __str__(self):
+		return f'RRQ. filename: {self.filename}, mode: {self.mode}'
+
 
 class WRQ(RRQ):
 	@staticmethod
@@ -100,6 +103,9 @@ class WRQ(RRQ):
 			+ mode.encode() 
 			+ int_to_n_bytes(0, 1)
 			)
+
+	def __str__(self):
+		return f'WRQ. filename: {self.filename}, mode: {self.mode}'
 
 class DATA:
 	def __init__(self, data):
@@ -122,6 +128,8 @@ class DATA:
 			+ data
 			)
 
+	def __str__(self):
+		return f'DATA. Block: {self.block}, last: {('yes' if self.last else 'no')}, data: {self.data}'
 
 class ACK:
 	def __init__(self, data):
@@ -137,6 +145,9 @@ class ACK:
 	@property
 	def package(self):
 		return int_to_n_bytes(self.opcode) + int_to_n_bytes(self.block)
+
+	def __str__(self):
+		return f'ACK. Block: {self.block}'
 
 
 class ERROR:

@@ -1,143 +1,106 @@
 import socket
-import select
-import sys
-from header_settings import *
+import time
+import tftp as tf
 
-# settings
-IP = '127.0.0.1'
-PORT = 7777
-CODE = 'utf-8'
-TIMEOUT = 0.1
-
-sockets_to_read = []  # here lay clients sockets and server socket
-sockets_to_write = []  # client's sockets lay here
-buf = {}
+users = dict()
 
 
-class Client_queue:
-    frags = []
-    num = 0
-    to_read = True
+class User:
+    def __init__(self):
+        self.filename = None
+        self.mode = None
+        self.block = None
+        self.data = None
+        self._t = None
+        self.timeout = None
+        self._last_package = None
 
-    def __init__(self, to_read=True, num=0, frags=[], filename, mode):
-        self.frags = frags
-        self.num = num
-        self.to_read = to_read
-        self.mode = mode
-        self.filename = filename
+    @property
+    def t(self):
+        return self._t
 
-    def recv_ack(self):
-        self.num += 1
+    @t.setter
+    def t(self, t):
+        self.timeout = False
+        self._t = t
 
-    def send_ack(self):
-        n = self.num
-        self.num += 1
-        return n
+    @property
+    def last_package(self):
+        return self._last_package
 
-    def new_frag(self, frag):
-        # add check on file end
-        self.frags.append(frag)
-
-    def next_send(self):
-        return (self.num, self.frags[self.num])
-
-
-def server():
-    print('Server is starting...')
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    server_socket.bind((IP, PORT))
+    @last_package.setter
+    def last_package(self, package):
+        self._last_package = package
+        self.t = time.time()
 
 
-def new_connection(server_socket):
-    client_socket, client_address = server_socket.accept()
-    client_socket.setblocking(False)
-    sockets_to_read.append(client_socket)
-    sockets_to_write.append(client_socket)
-    print(f'New connection was established. IP: {client_address[0]} PORT:{client_address[1]}')
+def server(sock):
+    while True:
+        try:
+            data, addr = tf.recieve(sock)
+        except tf.IllegalOPCode:
+            tf.send(sock, addr, tf.ERROR.create_with_code(
+                tf.Err_code.ILLEGALOP))
+            continue
+        except:
+            print('Server shutdown.')
+            break
+
+        if addr not in users:
+            users[addr] = User()
+
+        print(f'recieved data from {addr}: {data}')
+
+        if data.opcode == tf.Operation.RRQ:
+            users[addr].filename = data.filename
+            users[addr].mode = data.mode
+            data = tf.read_file(data.filename)
+            if data is None:
+                error = tf.ERROR.create_with_code(tf.Err_code.NOTFOUND)
+                tf.send(sock, addr, error)
+                del users[addr]
+                continue
+
+            users[addr].data = data
+            users[addr].block = 0
+            package = tf.DATA.create(block, data[0:512])
+            users[addr].last_package = package
+            tf.send(sock, addr, package)
+
+        elif data.opcode == tf.Operation.WRQ:
+            users[addr].filename = data.filename
+            users[addr].mode = data.mode
+            data = tf.read_file(data.filename)
+            if data is not None:
+                error = tf.ERROR.create_with_code(tf.Err_code.EXIST)
+                tf.send(sock, addr, error)
+                del users[addr]
+                continue
+
+            tf.send(sock, addr, tf.ACK.create(0))
+
+        elif data.opcode == tf.Operation.ACK:
+            users[addr].block = data.block
+            accepted_data = users[addr].block * 512
+            frame = users[addr].data[accepted_data:accepted_data + 512]
+            if len(frame) == 0:
+                print(f'File {users[addr].filename} with {len(users[addr].data)} bytes was sent.')
+                del users[addr]
+
+            package = tf.DATA.create(users[addr].block + 1, frame)
+            users[addr].last_package = package
+            tf.send(sock, addr, package)
+
+        elif data.opcode == tf.Operation.DATA:
+            pass
 
 
-def close_connection(current_socket):
-    current_socket.shutdown(socket.SHUT_RDWR)
-    current_socket.close()
-    sockets_to_read.remove(current_socket)
-    sockets_to_write.remove(current_socket)
-    del buf[current_socket]
+def socket_init():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(tf.SETTINGS['HOST'].values())
+    print('Server is ready.')
+    return sock
 
 
-def reciever(client_socket):
-    req = int(client_socket.recv(2))
-    if req == 1 or 2:
-        attrs = get_attrs(client_socket)
-        if req == 1:
-            buf[client_socket] = get_file_frags(
-                attrs['filename'], attrs['mode'])
-        else:
-            buf[client_socket] = Client_queue(
-                False, 0, [], attrs['filename'], attrs['mode'])
-    elif req == 3:
-        frag = get_frag(client_socket)
-        buf[client_socket].new_frag(frag)
-    else:
-        ack = int(client_socket.recv(2))
-        buf[client_socket].recv_ack(ack)
-
-
-def sender(client_socket):
-    client = buf[client_socket]
-    if client.to_read:
-        ack = client.send_ack()
-        message = f'{4:>{2}}{ack:>{2}}'
-        message = message.encode(CODE)
-        client_socket.send(message)
-    else:
-        frag = client.next_send()
-        message = f'{3:>{2}}{frag[0]:>{2}}{frag[1]}'
-        message = message.encode(CODE)
-        client_socket.send(message)
-
-
-def get_attrs(client_socket):
-    pass
-
-
-def get_message(client_socket):
-    # when we get empty header - we close connection.
-    try:
-        if not buffers[client_socket]['header_full']:
-            header = buffers[client_socket]['header']
-            response = wait_full_length(
-                client_socket, header, CLIENT_HEADER_LENGTH)
-
-            buffers[client_socket]['header'] = response['data']
-            buffers[client_socket]['header_full'] = response['data_full']
-
-            if not buffers[client_socket]['header_full']:
-                return
-
-        header = buffers[client_socket]['header'].decode(CODE)
-        h_charcount = int(header[:H_LEN_CHAR].strip())
-        h_nickname = header[H_LEN_CHAR:].strip()
-
-        if not buffers[client_socket]['message_full']:
-            message = buffers[client_socket]['message']
-            response = wait_full_length(client_socket, message, h_charcount)
-
-            buffers[client_socket]['message'] = response['data']
-            buffers[client_socket]['message_full'] = response['data_full']
-
-            if not buffers[client_socket]['message_full']:
-                return
-
-        message = buffers[client_socket]['message'].decode(CODE)
-        buffers[client_socket] = {'header': ''.encode(CODE), 'message': ''.encode(CODE),
-                                  'header_full': False, 'message_full': False}
-
-        return {'length': h_charcount, 'nickname': h_nickname, 'data': message}
-
-    except Exception as e:
-        close_connection(client_socket)
-        print(e)
-        return
-
-
-server()
+server(sock)
