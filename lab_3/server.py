@@ -46,25 +46,6 @@ def server():
     print('Server is starting...')
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.bind((IP, PORT))
-    server_socket.listen()
-    soc_to_read.append(server_socket)
-    print(f"Listening for connections ip:{IP}, port:{PORT}")
-
-    while True:
-        sread, swrite, sexcept = select.select(
-            sockets_to_read, sockets_to_write, sockets_to_write, TIMEOUT)
-
-        for current_socket in sread:
-            if current_socket == server_socket:
-                new_connection(server_socket)
-            else:
-                reciever(current_socket)
-
-        for current_socket in swrite:
-            sender(current_socket)
-
-        for current_socket in sexcept:
-            close_connection(current_socket)
 
 
 def new_connection(server_socket):
