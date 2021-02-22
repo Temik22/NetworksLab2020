@@ -1,78 +1,122 @@
 import socket
 import select
-import time
 import sys
-import json
-import threading
 from header_settings import *
 
 # settings
 IP = '127.0.0.1'
 PORT = 7777
 CODE = 'utf-8'
+TIMEOUT = 0.1
 
-sockets = []  # here will lay clients sockets
-buffers = {}
-clients = []
+sockets_to_read = []  # here lay clients sockets and server socket
+sockets_to_write = []  # client's sockets lay here
+buf = {}
 
-buffers_empty = {'header': ''.encode(CODE), 'message': ''.encode(CODE),
-                 'header_full': False, 'message_full': False}
+
+class Client_queue:
+    frags = []
+    num = 0
+    to_read = True
+
+    def __init__(self, to_read=True, num=0, frags=[], filename, mode):
+        self.frags = frags
+        self.num = num
+        self.to_read = to_read
+        self.mode = mode
+        self.filename = filename
+
+    def recv_ack(self):
+        self.num += 1
+
+    def send_ack(self):
+        n = self.num
+        self.num += 1
+        return n
+
+    def new_frag(self, frag):
+        # add check on file end
+        self.frags.append(frag)
+
+    def next_send(self):
+        return (self.num, self.frags[self.num])
 
 
 def server():
+    print('Server is starting...')
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((IP, PORT))
     server_socket.listen()
-    sockets.append(server_socket)
+    soc_to_read.append(server_socket)
     print(f"Listening for connections ip:{IP}, port:{PORT}")
 
     while True:
-        sockets_to_read, _, sockets_with_exception = select.select(
-            sockets, [], sockets)
+        sread, swrite, sexcept = select.select(
+            sockets_to_read, sockets_to_write, sockets_to_write, TIMEOUT)
 
-        for current_socket in sockets_to_read:
+        for current_socket in sread:
             if current_socket == server_socket:
                 new_connection(server_socket)
             else:
-                message = get_message(current_socket)
+                reciever(current_socket)
 
-                if message:
-                    reciever(current_socket, message)
-                else:
-                    continue
+        for current_socket in swrite:
+            sender(current_socket)
 
-        for current_socket in sockets_with_exception:
+        for current_socket in sexcept:
             close_connection(current_socket)
 
 
 def new_connection(server_socket):
     client_socket, client_address = server_socket.accept()
     client_socket.setblocking(False)
-    sockets.append(client_socket)
-    clients.append(client_socket)
-    # added dict that has already initialized as empty buffer place
-    buffers[client_socket] = {'header': ''.encode(CODE), 'message': ''.encode(CODE),
-                              'header_full': False, 'message_full': False}
+    sockets_to_read.append(client_socket)
+    sockets_to_write.append(client_socket)
     print(f'New connection was established. IP: {client_address[0]} PORT:{client_address[1]}')
 
 
 def close_connection(current_socket):
     current_socket.shutdown(socket.SHUT_RDWR)
     current_socket.close()
-    sockets.remove(current_socket)
-    clients.remove(current_socket)
-    del buffers[current_socket]
-    return
+    sockets_to_read.remove(current_socket)
+    sockets_to_write.remove(current_socket)
+    del buf[current_socket]
 
 
-def wait_full_length(current_socket, content, length):
-    if len(content) != length:
-        content += current_socket.recv(length - len(content))
-        if len(content) == length:
-            return {'data': content, 'data_full': True}
+def reciever(client_socket):
+    req = int(client_socket.recv(2))
+    if req == 1 or 2:
+        attrs = get_attrs(client_socket)
+        if req == 1:
+            buf[client_socket] = get_file_frags(
+                attrs['filename'], attrs['mode'])
         else:
-            return {'data': content, 'data_full': False}
+            buf[client_socket] = Client_queue(
+                False, 0, [], attrs['filename'], attrs['mode'])
+    elif req == 3:
+        frag = get_frag(client_socket)
+        buf[client_socket].new_frag(frag)
+    else:
+        ack = int(client_socket.recv(2))
+        buf[client_socket].recv_ack(ack)
+
+
+def sender(client_socket):
+    client = buf[client_socket]
+    if client.to_read:
+        ack = client.send_ack()
+        message = f'{4:>{2}}{ack:>{2}}'
+        message = message.encode(CODE)
+        client_socket.send(message)
+    else:
+        frag = client.next_send()
+        message = f'{3:>{2}}{frag[0]:>{2}}{frag[1]}'
+        message = message.encode(CODE)
+        client_socket.send(message)
+
+
+def get_attrs(client_socket):
+    pass
 
 
 def get_message(client_socket):
@@ -113,30 +157,6 @@ def get_message(client_socket):
         close_connection(client_socket)
         print(e)
         return
-
-
-def reciever(client_socket, message):
-    # read message
-    recieve_time = int(time.time())
-    server_formatted_time = get_time(recieve_time)
-
-    print(f"Recieved message from {message['nickname']} at {server_formatted_time}: {message['data']}")
-
-    # get info for server that message has been recieved
-
-    # send this message to all other clients
-
-    header_to_send = f"{message['length']:<{H_LEN_CHAR}}{message['nickname']:<{H_NAME_CHAR}}{recieve_time:<{H_TIME_CHAR}}"
-    message_to_send = header_to_send + message['data']
-    message_to_send = message_to_send.encode(CODE)
-
-    for client in clients:
-        if client != client_socket:
-            try:
-                client.send(message_to_send)
-            except Exception:
-                close_connection(client)
-                continue
 
 
 server()
