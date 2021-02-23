@@ -92,7 +92,24 @@ def server(sock):
             tf.send(sock, addr, package)
 
         elif data.opcode == tf.Operation.DATA:
-            pass
+            package = tf.ACK.create(data.block)
+            users[addr].last_package = package
+            tf.send(sock, addr, package)
+            users[addr].data += data.data
+            if data.last:
+                tf.write_file(users[addr].filename,
+                              users[addr].data, users[addr].mode)
+
+        for addr, user in list(users.items()):
+            if time.time() - user.t >= 5 and addr in users:
+                if user.timeout:
+                    print(f'User with addr {addr} deleted because timeouted twice.')
+                    del users[addr]
+                elif user.last_package is not None:
+                    print(f'User with addr {addr} timeout.')
+                    user.t = time.time()
+                    user.timeout = True
+                    tf.send(sock, addr, user.last_package)
 
 
 def socket_init():
