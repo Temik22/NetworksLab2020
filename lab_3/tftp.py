@@ -161,13 +161,13 @@ class ERROR:
     @staticmethod
     def create_with_code(code):
         return ERROR(
-            int_to_n_bytes(Operation.ERROR)
-            + int_to_n_bytes(code.value())
+            int_to_n_bytes(Operation.ERROR.value)
+            + int_to_n_bytes(code.value)
             + get_err_message(code).encode()
             + int_to_n_bytes(0, 1)
         )
 
-    @property
+    @ property
     def create(self):
         return (
             int_to_n_bytes(self.opcode.value)

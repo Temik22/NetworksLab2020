@@ -25,7 +25,7 @@ def connect(addr, port):
             print('Wrong address view.')
             return
 
-        if (1 <= int(port) <= 65535):
+        if not (1 <= int(port) <= 65535):
             print('Wrong port view.')
             return
 
@@ -48,7 +48,7 @@ def get(sock, filenames):
             continue
         rrq = tf.RRQ.create(filename, SETTINGS['MODE'])
         logging(f'Sending {rrq}')
-        sock.sendto(rrq, SETTINGS['CONNECT'])
+        sock.sendto(rrq.package, SETTINGS['CONNECT'])
         file = b''
         last = False
 
@@ -63,7 +63,7 @@ def get(sock, filenames):
                 ack = tf.ACK.create(data.block)
                 file += data.data
                 logging(f'Sending {ack}')
-                sock.sendto(ack, SETTINGS['CONNECT'])
+                sock.sendto(ack.package, SETTINGS['CONNECT'])
 
         if last:
             tf.write_file(filename, file, SETTINGS['MODE'])
@@ -79,7 +79,7 @@ def put(sock, filenames):
 
         wrq = tf.WRQ.create(filename, SETTINGS['MODE'])
         logging(f'Sending {wrq}')
-        sock.sendto(wrq, SETTINGS['CONNECT'])
+        sock.sendto(wrq.package, SETTINGS['CONNECT'])
         block = 0
         while True:
             data, _ = tf.recieve(sock)
@@ -89,9 +89,9 @@ def put(sock, filenames):
             elif data.opcode == tf.Operation.ACK:
                 block = data.block
                 frame = file[block * 512:block * 512 + 512]
-                package = tf.DATA.create(block + 1, frame)
+                dat = tf.DATA.create(block + 1, frame)
                 print(f'Sending {package}')
-                sock.sendto(package, SETTINGS['CONNECT'])
+                sock.sendto(dat.package, SETTINGS['CONNECT'])
                 if package.last:
                     break
 
@@ -107,7 +107,7 @@ def client(sock):
             if len(com) < 3:
                 print('Not enough arguments')
                 continue
-            connect(*com[1:2])
+            connect(*com[1:3])
 
         elif com[0] == 'binary':
             change_mode('octet')
