@@ -168,7 +168,7 @@ class ERROR:
         )
 
     @ property
-    def create(self):
+    def package(self):
         return (
             int_to_n_bytes(self.opcode.value)
             + int_to_n_bytes(self.code)
