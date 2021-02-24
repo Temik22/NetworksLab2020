@@ -66,7 +66,7 @@ def get(sock, filenames):
                 sock.sendto(ack.package, SETTINGS['CONNECT'])
 
         if last:
-            tf.write_file(filename, file, SETTINGS['MODE'])
+            tf.write_file(filename, file, SETTINGS['MODE'], False)
 
 
 def put(sock, filenames):
@@ -90,7 +90,7 @@ def put(sock, filenames):
                 block = data.block
                 frame = file[block * 512:block * 512 + 512]
                 dat = tf.DATA.create(block + 1, frame)
-                print(f'Sending {package}')
+                print(f'Sending {dat}')
                 sock.sendto(dat.package, SETTINGS['CONNECT'])
                 if package.last:
                     break

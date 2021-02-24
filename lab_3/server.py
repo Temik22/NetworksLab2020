@@ -101,7 +101,7 @@ def server(sock):
                               users[addr].data, users[addr].mode)
 
         for addr, user in list(users.items()):
-            if time.time() - user.t >= 5 and addr in users:
+            if user.t is not None and time.time() - user.t >= 5 and addr in users:
                 if user.timeout:
                     print(f'User with addr {addr} deleted because timeouted twice.')
                     del users[addr]
