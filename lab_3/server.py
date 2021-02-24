@@ -10,7 +10,7 @@ class User:
         self.filename = None
         self.mode = None
         self.block = None
-        self.data = None
+        self.data = b''
         self._t = None
         self.timeout = None
         self._last_package = None
