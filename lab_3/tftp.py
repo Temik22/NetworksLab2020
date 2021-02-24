@@ -191,7 +191,7 @@ opcode_to_package = {
 
 def read_file(filename):
     try:
-        with open(filename, 'wb') as f:
+        with open(filename, 'rb') as f:
             data = f.read()
             f.close()
         return data
