@@ -86,6 +86,7 @@ def server(sock):
             if len(frame) == 0:
                 print(f'File {users[addr].filename} with {len(users[addr].data)} bytes was sent.')
                 del users[addr]
+                continue
 
             package = tf.DATA.create(users[addr].block + 1, frame)
             users[addr].last_package = package
