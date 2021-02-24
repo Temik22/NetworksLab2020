@@ -115,7 +115,7 @@ def server(sock):
 def socket_init():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(tf.SETTINGS['HOST'].values())
+    sock.bind((tf.SETTINGS['HOST'].values()))
     print('Server is ready.')
     return sock
 
