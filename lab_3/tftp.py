@@ -36,19 +36,19 @@ def get_err_message(code):
     msg = ''
     if code == Err_code.NOTDEFINED:
         msg = 'Not defined, see error message (if any).'
-    elif code == Err_Code.NOTFOUND:
+    elif code == Err_code.NOTFOUND:
         msg = 'File not found.'
-    elif code == Err_Code.ACCESSVIOLATION:
+    elif code == Err_code.ACCESSVIOLATION:
         msg = 'Access violation.'
-    elif code == Err_Code.DISKFULL:
+    elif code == Err_code.DISKFULL:
         msg = 'Disk full or allocation exceeded.'
-    elif code == Err_Code.ILLEGALOP:
+    elif code == Err_code.ILLEGALOP:
         msg = 'Illegal TFTP operation.'
-    elif code == Err_Code.UNKNOWN:
+    elif code == Err_code.UNKNOWN:
         msg = 'Unknown transfer ID.'
-    elif code == Err_Code.EXIST:
+    elif code == Err_code.EXIST:
         msg = 'File already exists.'
-    elif code == Err_Code.NOUSER:
+    elif code == Err_code.NOUSER:
         msg = 'No such user.'
     return msg
 
