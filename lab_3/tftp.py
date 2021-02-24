@@ -171,10 +171,13 @@ class ERROR:
     def package(self):
         return (
             int_to_n_bytes(self.opcode.value)
-            + int_to_n_bytes(self.code)
+            + int_to_n_bytes(self.code.value)
             + self.message.encode()
             + int_to_n_bytes(0, 1)
         )
+
+    def __str__(self):
+        return f'ERROR. Err_code: {self.code}, Message: {self.message}'
 
 
 opcode_to_package = {
@@ -186,21 +189,21 @@ opcode_to_package = {
 }
 
 
-def read_file(filename, server=True):
+def read_file(filename):
     try:
-        with open(('files/' if server else '') + filename, 'wb') as f:
+        with open(filename, 'wb') as f:
             data = f.read()
         return data
     except:
         return None
 
 
-def write_file(filename, data, mode, server=True):
+def write_file(filename, data, mode):
     if mode == 'netascii':
-        with open(('files/' if server else '') + filename, 'wb') as f:
+        with open(filename, 'wb') as f:
             pass  # f.write() netascii to bytes function
     elif mode == 'octet':
-        with open(('files/' if server else '') + filename, 'wb') as f:
+        with open(filename, 'wb') as f:
             f.write(data)
 
 
