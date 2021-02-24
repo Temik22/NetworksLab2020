@@ -99,7 +99,7 @@ def put(sock, filenames):
 def client(sock):
     while True:
         try:
-            com = input('> ').lower().split()
+            com = input('> ').lower().split(' ')
         except:
             break
 
