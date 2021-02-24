@@ -120,4 +120,4 @@ def socket_init():
     return sock
 
 
-server(sock)
+server(socket_init())
