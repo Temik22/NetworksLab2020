@@ -193,6 +193,7 @@ def read_file(filename):
     try:
         with open(filename, 'wb') as f:
             data = f.read()
+            f.close()
         return data
     except:
         return None
@@ -205,6 +206,7 @@ def write_file(filename, data, mode):
     elif mode == 'octet':
         with open(filename, 'wb') as f:
             f.write(data)
+            f.close()
 
 
 def recieve(sock):
