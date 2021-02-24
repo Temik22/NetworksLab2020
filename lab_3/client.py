@@ -43,7 +43,7 @@ def logging(msg):
 
 def get(sock, filenames):
     for filename in filenames:
-        if tf.read_file(filename) is not None:
+        if tf.read_file(filename, False) is not None:
             print(f'File {filename} already exist.')
             continue
         rrq = tf.RRQ.create(filename, SETTINGS['MODE'])
@@ -71,7 +71,7 @@ def get(sock, filenames):
 
 def put(sock, filenames):
     for filename in filenames:
-        file = tf.read_file(filename)
+        file = tf.read_file(filename, False)
         # check on netascii todo()
         if file is None:
             print(f'File {filename} does not exist')

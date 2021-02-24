@@ -189,9 +189,9 @@ opcode_to_package = {
 }
 
 
-def read_file(filename):
+def read_file(filename, server=True):
     try:
-        with open(filename, 'rb') as f:
+        with open(('files/' if server else '') + filename, 'rb') as f:
             data = f.read()
             f.close()
         return data
@@ -199,12 +199,12 @@ def read_file(filename):
         return None
 
 
-def write_file(filename, data, mode):
+def write_file(filename, data, mode, server=True):
     if mode == 'netascii':
-        with open(filename, 'wb') as f:
+        with open(('files/' if server else '') + filename, 'wb') as f:
             pass  # f.write() netascii to bytes function
     elif mode == 'octet':
-        with open(filename, 'wb') as f:
+        with open(('files/' if server else '') + filename, 'wb') as f:
             f.write(data)
             f.close()
 
