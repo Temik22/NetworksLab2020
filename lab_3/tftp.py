@@ -2,8 +2,8 @@ from enum import Enum
 
 SETTINGS = {
     'HOST': {
-        'ADDR': '192.168.0.222',
-        'PORT': '6969'
+        'ADDR': '0.0.0.0',
+        'PORT': 6969
     },
     'BUFFERSIZE': 1024
 }
