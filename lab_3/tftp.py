@@ -131,7 +131,7 @@ class DATA:
         )
 
     def __str__(self):
-        return f'DATA. Block: {self.block}, data: {self.data}'
+        return f'DATA. Block: {self.block}, Last: {self.last}, data: {self.data}'
 
 
 class ACK:

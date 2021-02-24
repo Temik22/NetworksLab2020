@@ -92,7 +92,7 @@ def put(sock, filenames):
                 dat = tf.DATA.create(block + 1, frame)
                 print(f'Sending {dat}')
                 sock.sendto(dat.package, SETTINGS['CONNECT'])
-                if package.last:
+                if dat.last:
                     break
 
 
