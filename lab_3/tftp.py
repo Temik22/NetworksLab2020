@@ -145,7 +145,7 @@ class ACK:
 
     @property
     def package(self):
-        return int_to_n_bytes(self.opcode) + int_to_n_bytes(self.block)
+        return int_to_n_bytes(self.opcode.value) + int_to_n_bytes(self.block)
 
     def __str__(self):
         return f'ACK. Block: {self.block}'
