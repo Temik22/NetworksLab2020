@@ -62,8 +62,8 @@ def server(sock):
                 continue
 
             users[addr].data = data
-            users[addr].block = 0
-            package = tf.DATA.create(users[addr].block, data[0:512])
+            users[addr].block = 1
+            package = tf.DATA.create(users[addr].block + 1, data[0:512])
             users[addr].last_package = package
             tf.send(sock, addr, package)
 

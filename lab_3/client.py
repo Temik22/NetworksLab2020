@@ -4,7 +4,7 @@ import tftp as tf
 SETTINGS = {
     'MODE': 'octet',
     'LOG': True,
-    'CONNECT': ('192.168.0.222', 6969)
+    'CONNECT': ('192.168.0.222', 69)
 }
 
 
