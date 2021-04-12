@@ -123,6 +123,7 @@ def check_timeout(sock, users):
                 print(f'User with addr {addr} timeout.')
                 user.t = time.time()
                 user.timeout = True
+                print(f'send {user.last_package} to {addr}')
                 tf.send(sock, addr, user.last_package)
 
 
