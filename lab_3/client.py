@@ -4,7 +4,7 @@ import tftp as tf
 SETTINGS = {
     'MODE': 'octet',
     'LOG': True,
-    'CONNECT': ('192.168.0.222', 69)
+    'CONNECT': ('192.168.0.222', 6969)
 }
 
 
@@ -43,6 +43,8 @@ def logging(msg):
 
 def get(sock, filenames):
     for filename in filenames:
+        if filename == ' ':
+            break
         if tf.read_file(filename, False) is not None:
             print(f'File {filename} already exist.')
             continue
