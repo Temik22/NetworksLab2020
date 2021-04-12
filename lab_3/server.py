@@ -1,6 +1,7 @@
 import socket
 import time
 import tftp as tf
+from threading import Thread
 
 users = dict()
 
@@ -126,17 +127,12 @@ def check_timeout(sock, users):
 
 
 def socket_init():
-    print('Server is ready.')
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((tf.SERVER_ADDRESS, utils.PORT))
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(tuple(tf.SETTINGS['HOST'].values()))
     sock.settimeout(tf.SETTINGS['TIMEOUT'])
-    main_thread = ServerThread(sock)
-    main_thread.start()
-    while True:
-        if input() == 'exit':
-            sock.close()
-            print('Exit...')
-            exit()
+    print('Server is ready.')
+    return sock
 
 
 server(socket_init())
