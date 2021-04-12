@@ -107,6 +107,7 @@ def server(sock):
             tf.send(sock, addr, package)
             users[addr].data += data.data
             if data.last:
+                print(f'File {users[addr].filename} with {len(users[addr].data)} bytes was recieved.')
                 tf.write_file(users[addr].filename,
                               users[addr].data, users[addr].mode)
                 del users[addr]
