@@ -1,4 +1,5 @@
 import socket
+import time
 import tftp as tf
 
 SETTINGS = {
@@ -72,6 +73,7 @@ def get(sock, filenames):
 
 
 def put(sock, filenames):
+    timeout = False
     for filename in filenames:
         file = tf.read_file(filename, False)
         # check on netascii todo()
@@ -89,8 +91,10 @@ def put(sock, filenames):
             if data.opcode == tf.Operation.ERROR:
                 break
             elif data.opcode == tf.Operation.ACK:
-                if data.block == 5:
-                    break
+                if data.block == 5 and not timeout:
+                    timeout = True
+                    time.sleep(6)
+                    continue
                 block = data.block
                 frame = file[block * 512:block * 512 + 512]
                 dat = tf.DATA.create(block + 1, frame)

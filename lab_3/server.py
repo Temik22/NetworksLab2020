@@ -109,6 +109,7 @@ def server(sock):
             if data.last:
                 tf.write_file(users[addr].filename,
                               users[addr].data, users[addr].mode)
+                del users[addr]
 
         check_timeout(sock, users)
 
