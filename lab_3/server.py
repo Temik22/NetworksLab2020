@@ -101,10 +101,10 @@ def server(sock):
                 tf.write_file(users[addr].filename,
                               users[addr].data, users[addr].mode)
 
-        check_timeout(users)
+        check_timeout(sock, users)
 
 
-def check_timeout(users):
+def check_timeout(sock, users):
     for addr, user in list(users.items()):
         if user.t is not None and time.time() - user.t >= 5 and addr in users:
             if user.timeout:
