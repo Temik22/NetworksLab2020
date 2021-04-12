@@ -128,8 +128,8 @@ def check_timeout(sock, users):
 def socket_init():
     print('Server is ready.')
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((utils.SERVER_ADDRESS, utils.PORT))
-    sock.settimeout(utils.SETTINGS['TIMEOUT'])
+    sock.bind((tf.SERVER_ADDRESS, utils.PORT))
+    sock.settimeout(tf.SETTINGS['TIMEOUT'])
     main_thread = ServerThread(sock)
     main_thread.start()
     while True:
