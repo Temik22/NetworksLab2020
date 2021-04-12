@@ -89,6 +89,8 @@ def put(sock, filenames):
             if data.opcode == tf.Operation.ERROR:
                 break
             elif data.opcode == tf.Operation.ACK:
+                if data.block == 5:
+                    break
                 block = data.block
                 frame = file[block * 512:block * 512 + 512]
                 dat = tf.DATA.create(block + 1, frame)

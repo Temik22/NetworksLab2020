@@ -57,6 +57,7 @@ def server(sock):
             data = tf.read_file(data.filename)
             if data is None:
                 error = tf.ERROR.create_with_code(tf.Err_code.NOTFOUND)
+                print(f'send {error} to {addr}')
                 tf.send(sock, addr, error)
                 del users[addr]
                 continue
@@ -65,6 +66,7 @@ def server(sock):
             users[addr].block = 1
             package = tf.DATA.create(users[addr].block, data[0:512])
             users[addr].last_package = package
+            print(f'send {package} to {addr}')
             tf.send(sock, addr, package)
 
         elif data.opcode == tf.Operation.WRQ:
@@ -73,6 +75,7 @@ def server(sock):
             data = tf.read_file(data.filename)
             if data is not None:
                 error = tf.ERROR.create_with_code(tf.Err_code.EXIST)
+                print(f'send {error} to {addr}')
                 tf.send(sock, addr, error)
                 del users[addr]
                 continue
@@ -90,11 +93,13 @@ def server(sock):
 
             package = tf.DATA.create(users[addr].block + 1, frame)
             users[addr].last_package = package
+            print(f'send {package} to {addr}')
             tf.send(sock, addr, package)
 
         elif data.opcode == tf.Operation.DATA:
             package = tf.ACK.create(data.block)
             users[addr].last_package = package
+            print(f'send {package} to {addr}')
             tf.send(sock, addr, package)
             users[addr].data += data.data
             if data.last:
