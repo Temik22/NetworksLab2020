@@ -42,6 +42,9 @@ def server(sock):
             tf.send(sock, addr, tf.ERROR.create_with_code(
                 tf.Err_code.ILLEGALOP))
             continue
+        except socket.timeout:
+            check_timeout(sock, users)
+            continue
         except:
             print('Server shutdown.')
             break
@@ -111,7 +114,7 @@ def server(sock):
 
 def check_timeout(sock, users):
     for addr, user in list(users.items()):
-        if user.t is not None and time.time() - user.t >= 5 and addr in users:
+        if user.t is not None and time.time() - user.t >= tf.SETTINGS['TIMEOUT'] and addr in users:
             if user.timeout:
                 print(f'User with addr {addr} deleted because timeouted twice.')
                 del users[addr]
@@ -123,11 +126,17 @@ def check_timeout(sock, users):
 
 
 def socket_init():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(tuple(tf.SETTINGS['HOST'].values()))
     print('Server is ready.')
-    return sock
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((utils.SERVER_ADDRESS, utils.PORT))
+    sock.settimeout(utils.SETTINGS['TIMEOUT'])
+    main_thread = ServerThread(sock)
+    main_thread.start()
+    while True:
+        if input() == 'exit':
+            sock.close()
+            print('Exit...')
+            exit()
 
 
 server(socket_init())

@@ -5,7 +5,8 @@ SETTINGS = {
         'ADDR': '0.0.0.0',
         'PORT': 6969
     },
-    'BUFFERSIZE': 1024
+    'BUFFERSIZE': 1024,
+    'TIMEOUT': 5
 }
 
 
